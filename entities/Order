@@ -1,0 +1,94 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "customer_address": {
+      "type": "string",
+      "description": "Delivery address"
+    },
+    "customer_lat": {
+      "type": "number"
+    },
+    "customer_lng": {
+      "type": "number"
+    },
+    "items": {
+      "type": "array",
+      "description": "Order items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_amount": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "preparing",
+        "picked_up",
+        "delivering",
+        "delivered",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "driver_email": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "driver_lat": {
+      "type": "number"
+    },
+    "driver_lng": {
+      "type": "number"
+    },
+    "estimated_time": {
+      "type": "number",
+      "description": "Estimated delivery time in minutes"
+    },
+    "distance_km": {
+      "type": "number"
+    },
+    "restaurant_address": {
+      "type": "string"
+    },
+    "restaurant_lat": {
+      "type": "number"
+    },
+    "restaurant_lng": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "customer_email",
+    "customer_address",
+    "items",
+    "total_amount"
+  ]
+}

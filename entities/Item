@@ -1,0 +1,53 @@
+{
+  "name": "Item",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Item name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Item description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price in dollars"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "food",
+        "grocery",
+        "pharmacy",
+        "package"
+      ],
+      "description": "Item category"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Item image URL"
+    },
+    "restaurant": {
+      "type": "string",
+      "description": "Restaurant or store name"
+    },
+    "prep_time": {
+      "type": "number",
+      "description": "Preparation time in minutes"
+    },
+    "rating": {
+      "type": "number",
+      "description": "Rating out of 5"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "category"
+  ]
+}

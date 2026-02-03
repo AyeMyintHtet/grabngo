@@ -1,14 +1,12 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
+// Standard API client placeholder
+export const base44 = {
+  auth: {
+    me: async () => null,
+    logout: async () => { },
+    redirectToLogin: () => {
+      console.log('Redirect to login placeholder');
+    }
+  }
+};
 
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  requiresAuth: false,
-  appBaseUrl
-});
+export const createClient = () => base44;
