@@ -20,6 +20,16 @@ app.use((req, res, next) => {
   next();
 });
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files from the dist directory
+app.use(express.static(path.join(__dirname, '../../dist')));
+
+
 import { orderService } from './services/orderService.js';
 
 // ... (keep existing imports)
@@ -96,6 +106,13 @@ app.patch('/api/orders/:id', async (req, res) => {
     console.error('Error updating order:', error);
     res.status(500).json({ error: 'Failed to update order' });
   }
+});
+
+// Catch-all route to serve React app for non-API requests
+// Catch-all route to serve React app for non-API requests
+app.use((req, res) => {
+  const indexPath = path.join(__dirname, '../../dist/index.html');
+  res.sendFile(indexPath);
 });
 
 app.listen(PORT, () => {

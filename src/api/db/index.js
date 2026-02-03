@@ -8,7 +8,12 @@ import { fileURLToPath } from 'url';
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+// Try to load .env from different possible locations (dev vs prod structure)
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') }); // Local dev
+dotenv.config({ path: path.resolve(__dirname, '../../.env') }); // Alternative
+dotenv.config(); // Standard lookup
+
 
 if (!process.env.POSTGRESQL) {
   throw new Error('POSTGRESQL environment variable is not set');
