@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -11,6 +11,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -28,13 +29,16 @@ export default function Header() {
     { name: 'Drive with Us', path: 'Delivery', icon: <User className="w-4 h-4" /> },
   ];
 
+  const isHome = location.pathname === '/' || location.pathname === '/Home';
+  const isDarkParams = isScrolled || !isHome;
+
   return (
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-          ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-black/5'
-          : 'bg-transparent'
+        ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-black/5'
+        : 'bg-transparent'
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,7 +51,7 @@ export default function Header() {
               </div>
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white" />
             </div>
-            <span className={`text-2xl font-bold tracking-tight ${isScrolled ? 'text-gray-900' : 'text-white'}`}>
+            <span className={`text-2xl font-bold tracking-tight ${isDarkParams ? 'text-gray-900' : 'text-white'}`}>
               Grab<span className="text-emerald-500">Go</span>
             </span>
           </Link>
@@ -58,9 +62,9 @@ export default function Header() {
               <Link
                 key={link.path}
                 to={createPageUrl(link.path)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${isScrolled
-                    ? 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${isDarkParams
+                  ? 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
               >
                 {link.icon}
@@ -73,7 +77,7 @@ export default function Header() {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="hidden sm:flex items-center gap-3">
-                <div className={`text-sm ${isScrolled ? 'text-gray-600' : 'text-white/80'}`}>
+                <div className={`text-sm ${isDarkParams ? 'text-gray-600' : 'text-white/80'}`}>
                   Hi, {user.full_name?.split(' ')[0] || 'User'}
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-medium">
@@ -95,7 +99,7 @@ export default function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={isScrolled ? 'text-gray-900' : 'text-white'}
+                  className={isDarkParams ? 'text-gray-900' : 'text-white'}
                 >
                   <Menu className="w-6 h-6" />
                 </Button>

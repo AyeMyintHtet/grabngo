@@ -7,10 +7,11 @@ import L from 'leaflet';
 
 // Fix for default markers
 delete L.Icon.Default.prototype._getIconUrl;
+
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
 // Custom icons
@@ -45,22 +46,22 @@ export default function LiveMap({
   const [mapCenter, setMapCenter] = useState([40.7128, -74.0060]);
 
   useEffect(() => {
-    if (driverLocation?.lat && driverLocation?.lng) {
+    if (driverLocation?.lat != null && driverLocation?.lng != null) {
       setMapCenter([driverLocation.lat, driverLocation.lng]);
-    } else if (customerLocation?.lat && customerLocation?.lng) {
+    } else if (customerLocation?.lat != null && customerLocation?.lng != null) {
       setMapCenter([customerLocation.lat, customerLocation.lng]);
     }
   }, [driverLocation, customerLocation]);
 
   // Create route path
   const routeCoordinates = [];
-  if (restaurantLocation?.lat && restaurantLocation?.lng) {
+  if (restaurantLocation?.lat != null && restaurantLocation?.lng != null) {
     routeCoordinates.push([restaurantLocation.lat, restaurantLocation.lng]);
   }
-  if (driverLocation?.lat && driverLocation?.lng) {
+  if (driverLocation?.lat != null && driverLocation?.lng != null) {
     routeCoordinates.push([driverLocation.lat, driverLocation.lng]);
   }
-  if (customerLocation?.lat && customerLocation?.lng) {
+  if (customerLocation?.lat != null && customerLocation?.lng != null) {
     routeCoordinates.push([customerLocation.lat, customerLocation.lng]);
   }
 
@@ -80,7 +81,7 @@ export default function LiveMap({
         <MapUpdater center={mapCenter} />
 
         {/* Restaurant Marker */}
-        {restaurantLocation?.lat && restaurantLocation?.lng && (
+        {restaurantLocation?.lat != null && restaurantLocation?.lng != null && (
           <Marker position={[restaurantLocation.lat, restaurantLocation.lng]} icon={restaurantIcon}>
             <Popup>
               <div className="text-center">
@@ -92,7 +93,7 @@ export default function LiveMap({
         )}
 
         {/* Driver Marker */}
-        {driverLocation?.lat && driverLocation?.lng && (
+        {driverLocation?.lat != null && driverLocation?.lng != null && (
           <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverIcon}>
             <Popup>
               <div className="text-center">
@@ -104,7 +105,7 @@ export default function LiveMap({
         )}
 
         {/* Customer Marker */}
-        {customerLocation?.lat && customerLocation?.lng && (
+        {customerLocation?.lat != null && customerLocation?.lng != null && (
           <Marker position={[customerLocation.lat, customerLocation.lng]} icon={customerIcon}>
             <Popup>
               <div className="text-center">
