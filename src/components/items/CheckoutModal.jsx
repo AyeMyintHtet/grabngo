@@ -41,7 +41,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, user, onPlaceOrde
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white">
         <DialogHeader className="p-6 bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
           <DialogTitle className="text-2xl font-bold">Checkout</DialogTitle>
           <p className="text-white/80">Complete your order</p>
@@ -117,7 +117,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, user, onPlaceOrde
           <Button
             onClick={handleSubmit}
             disabled={!address.trim() || isLoading}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-xl py-6 text-lg"
+            className="w-full text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl py-6 text-lg"
           >
             {isLoading ? (
               <>

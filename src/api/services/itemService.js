@@ -4,7 +4,10 @@ import { eq } from 'drizzle-orm';
 
 export const itemService = {
   // Get all items
-  getAllItems: async () => {
+  getAllItems: async (category) => {
+    if (category && category !== 'all') {
+      return await db.select().from(items).where(eq(items.category, category));
+    }
     return await db.select().from(items);
   },
 

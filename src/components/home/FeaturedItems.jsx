@@ -4,15 +4,28 @@ import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { Star, Clock, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { base44 } from '@/api/base44Client';
+
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FeaturedItems() {
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['featured-items'],
-    queryFn: () => base44.entities.Item.filter({ is_available: true }, '-rating', 8),
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/items`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    },
   });
+
+  // Filter for high-rated items locally since API returns all
+  // Accessing Drizzle camelCase properties
+  const filteredItems = items
+    .filter(item => item.isAvailable)
+    .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0))
+    .slice(0, 8);
 
   return (
     <section className="py-20 bg-white">
@@ -48,8 +61,8 @@ export default function FeaturedItems() {
                 <Skeleton className="h-4 w-1/2" />
               </div>
             ))
-          ) : items.length > 0 ? (
-            items.map((item, index) => (
+          ) : filteredItems.length > 0 ? (
+            filteredItems.map((item, index) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -63,16 +76,16 @@ export default function FeaturedItems() {
                 >
                   <div className="relative overflow-hidden rounded-2xl mb-4">
                     <img
-                      src={item.image_url || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80`}
+                      src={item.imageUrl || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80`}
                       alt={item.name}
                       className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
                       <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm font-medium">{item.rating?.toFixed(1) || '4.5'}</span>
+                      <span className="text-sm font-medium">{Number(item.rating || 4.5).toFixed(1)}</span>
                     </div>
                     <div className="absolute bottom-3 left-3 bg-emerald-500 text-white rounded-full px-3 py-1 text-sm font-medium">
-                      ${item.price?.toFixed(2)}
+                      ${Number(item.price).toFixed(2)}
                     </div>
                   </div>
 
@@ -82,12 +95,12 @@ export default function FeaturedItems() {
 
                   <div className="flex items-center gap-3 text-sm text-gray-500">
                     <span>{item.restaurant || 'Local Store'}</span>
-                    {item.prep_time && (
+                    {item.prepTime && (
                       <>
                         <span>•</span>
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          <span>{item.prep_time} min</span>
+                          <span>{item.prepTime} min</span>
                         </div>
                       </>
                     )}

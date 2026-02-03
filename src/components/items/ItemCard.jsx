@@ -20,7 +20,7 @@ export default function ItemCard({ item, quantity = 0, onAdd, onRemove }) {
     >
       <div className="relative">
         <img
-          src={item.image_url || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80`}
+          src={item.imageUrl || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80`}
           alt={item.name}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
         />
@@ -31,10 +31,10 @@ export default function ItemCard({ item, quantity = 0, onAdd, onRemove }) {
         </div>
 
         {/* Rating */}
-        {item.rating && (
+        {item?.rating && (
           <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
             <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs font-medium">{item.rating.toFixed(1)}</span>
+            <span className="text-xs font-medium">{Number(item?.rating || 0).toFixed(1)}</span>
           </div>
         )}
 
@@ -74,7 +74,7 @@ export default function ItemCard({ item, quantity = 0, onAdd, onRemove }) {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-emerald-600">${item.price?.toFixed(2)}</span>
+            <span className="text-lg font-bold text-emerald-600">${Number(item?.price || 0).toFixed(2)}</span>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-gray-500">

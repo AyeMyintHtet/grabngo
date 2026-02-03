@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, ShoppingBag, X, Loader2 } from 'lucide-react';
@@ -30,7 +29,11 @@ export default function Items() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({
+    email: 'demo@example.com',
+    full_name: 'Demo User',
+    address: '123 Main St'
+  });
 
   // Get category from URL
   useEffect(() => {
@@ -41,34 +44,69 @@ export default function Items() {
     }
   }, []);
 
-  // Load user
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => { });
-  }, []);
-
   // Fetch items
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['items', activeCategory],
-    queryFn: () => activeCategory === 'all'
-      ? base44.entities.Item.filter({ is_available: true })
-      : base44.entities.Item.filter({ category: activeCategory, is_available: true }),
+    queryFn: async () => {
+      const url = new URL(`${import.meta.env.VITE_API_BASE_URL}/api/items`);
+      if (activeCategory !== 'all') {
+        url.searchParams.append('category', activeCategory);
+      }
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch items');
+      return res.json();
+    },
   });
 
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: (orderData) => base44.entities.Order.create({
-      ...orderData,
-      customer_email: user?.email,
-      customer_name: user?.full_name,
-      status: 'pending'
-    }),
+    mutationFn: async (orderData) => {
+      const payload = {
+        customerEmail: user?.email,
+        customerName: user?.full_name,
+        customerAddress: orderData.address || user?.address,
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.imageUrl
+        })),
+        restaurantLat: orderData?.restaurant_lat,
+        restaurantLng: orderData?.restaurant_lng,
+        totalAmount: cart.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0),
+        status: 'pending',
+        restaurantAddress: orderData?.restaurant_address || 'Local Store',
+        notes: orderData?.notes,
+        customerLat: orderData?.customer_lat,
+        customerLng: orderData?.customer_lng,
+      };
+
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Failed to create order');
+      return res.json();
+    },
     onSuccess: (order) => {
-      toast.success('Order placed successfully!');
+      toast.success(`Order placed successfully!`, {
+        duration: 2000,
+        position: "top-right",
+        style: {
+          backgroundColor: '#10B981',
+          color: 'white',
+          border: 'none',
+        },
+      });
       setCart([]);
       setIsCheckoutOpen(false);
       navigate(createPageUrl('Customer') + `?order=${order.id}`);
     },
     onError: (error) => {
+      console.error(error);
       toast.error('Failed to place order. Please try again.');
     }
   });
@@ -89,7 +127,16 @@ export default function Items() {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
-    toast.success(`${item.name} added to cart`);
+    toast.success(`${item.name} added to cart`, {
+      duration: 2000,
+      position: "top-right",
+      style: {
+        backgroundColor: '#10B981',
+        color: 'white',
+        border: 'none',
+      },
+      icon: <img src={item.imageUrl || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=50&q=80`} alt={item.name} className="w-8 h-8 rounded-full object-cover border border-white/20" />,
+    });
   };
 
   const removeFromCart = (item) => {
@@ -118,7 +165,8 @@ export default function Items() {
 
   const handleCheckout = () => {
     if (!user) {
-      base44.auth.redirectToLogin(window.location.href);
+      // Logic for unauthenticated checkout or redirect
+      toast.error("Please login to checkout");
       return;
     }
     setIsCartOpen(false);
@@ -152,7 +200,7 @@ export default function Items() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for food, groceries, restaurants..."
+              placeholder="Search for food, groceries..."
               className="pl-12 py-6 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500"
             />
             {searchQuery && (
@@ -178,8 +226,8 @@ export default function Items() {
               key={cat.key}
               onClick={() => setActiveCategory(cat.key)}
               className={`flex items-center gap-2 px-5 py-3 rounded-full whitespace-nowrap transition-all duration-300 ${activeCategory === cat.key
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                 }`}
             >
               <span className="text-lg">{cat.emoji}</span>

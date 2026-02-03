@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Clock, DollarSign, Package, Check, X } from 'lucide-react';
 
 export default function OrderRequestCard({ order, onAccept, onDecline, isAccepting }) {
-  const estimatedEarnings = (order.total_amount * 0.15 + 3).toFixed(2);
+  const estimatedEarnings = (Number(order.totalAmount || 0) * 0.15 + 3).toFixed(2);
 
   return (
     <motion.div
@@ -41,7 +41,7 @@ export default function OrderRequestCard({ order, onAccept, onDecline, isAccepti
           </div>
           <div className="flex-1">
             <p className="text-xs text-gray-500 uppercase tracking-wide">Pickup</p>
-            <p className="font-medium text-gray-900">{order.restaurant_address || 'Restaurant Location'}</p>
+            <p className="font-medium text-gray-900">{order.restaurantAddress || 'Restaurant Location'}</p>
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function OrderRequestCard({ order, onAccept, onDecline, isAccepti
           </div>
           <div className="flex-1">
             <p className="text-xs text-gray-500 uppercase tracking-wide">Dropoff</p>
-            <p className="font-medium text-gray-900">{order.customer_address}</p>
+            <p className="font-medium text-gray-900">{order.customerAddress}</p>
           </div>
         </div>
 
@@ -63,17 +63,17 @@ export default function OrderRequestCard({ order, onAccept, onDecline, isAccepti
         <div className="grid grid-cols-3 gap-3 pt-4 border-t">
           <div className="text-center p-3 bg-gray-50 rounded-xl">
             <Clock className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-            <p className="text-sm font-semibold text-gray-900">{order.estimated_time || '15'} min</p>
+            <p className="text-sm font-semibold text-gray-900">{order.estimatedTime || '15'} min</p>
             <p className="text-xs text-gray-500">Est. Time</p>
           </div>
           <div className="text-center p-3 bg-gray-50 rounded-xl">
             <MapPin className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-            <p className="text-sm font-semibold text-gray-900">{order.distance_km?.toFixed(1) || '2.5'} km</p>
+            <p className="text-sm font-semibold text-gray-900">{Number(order.distanceKm || 2.5).toFixed(1)} km</p>
             <p className="text-xs text-gray-500">Distance</p>
           </div>
           <div className="text-center p-3 bg-gray-50 rounded-xl">
             <DollarSign className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-            <p className="text-sm font-semibold text-gray-900">${order.total_amount?.toFixed(2)}</p>
+            <p className="text-sm font-semibold text-gray-900">${Number(order.totalAmount || 0).toFixed(2)}</p>
             <p className="text-xs text-gray-500">Order Value</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function OrderRequestCard({ order, onAccept, onDecline, isAccepti
           <Button
             onClick={() => onAccept(order.id)}
             disabled={isAccepting}
-            className="flex-1 rounded-xl py-5 bg-emerald-500 hover:bg-emerald-600"
+            className="flex-1 rounded-xl py-5 text-white bg-emerald-500 hover:bg-emerald-600"
           >
             <Check className="w-5 h-5 mr-2" />
             Accept

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+// import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Clock, MapPin, Loader2, ShoppingBag, RefreshCw } from 'lucide-react';
@@ -28,10 +28,12 @@ export default function Customer() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeTab, setActiveTab] = useState('active');
 
-  // Load user
+  // Mock user for demo
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {
-      base44.auth.redirectToLogin();
+    setUser({
+      email: 'demo@example.com',
+      full_name: 'Demo User',
+      address: '123 Main St'
     });
   }, []);
 
@@ -47,23 +49,25 @@ export default function Customer() {
   // Fetch user's orders
   const { data: orders = [], isLoading, refetch } = useQuery({
     queryKey: ['customer-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({ customer_email: user?.email }, '-created_date'),
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/orders?email=${user.email}`);
+      if (!res.ok) throw new Error('Failed to fetch orders');
+      // Sort orders by created date desc
+      const data = await res.json();
+      return data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
     enabled: !!user?.email,
-    refetchInterval: 5000, // Real-time updates every 5 seconds
+    refetchInterval: 5000,
   });
 
-  // Subscribe to order updates
+  // Removed subscription for now as it relies on base44
+  // We're using polling via refetchInterval instead
+  /*
   useEffect(() => {
-    if (!user?.email) return;
-
-    const unsubscribe = base44.entities.Order.subscribe((event) => {
-      if (event.data?.customer_email === user.email) {
-        refetch();
-      }
-    });
-
-    return () => unsubscribe();
+     ...
   }, [user?.email, refetch]);
+  */
 
   const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
   const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
@@ -152,8 +156,8 @@ export default function Customer() {
                         exit={{ opacity: 0, x: -20 }}
                         onClick={() => setSelectedOrder(order)}
                         className={`w-full text-left p-4 rounded-xl transition-all ${selectedOrder?.id === order.id
-                            ? 'bg-emerald-50 border-2 border-emerald-500'
-                            : 'bg-white border border-gray-200 hover:border-emerald-300'
+                          ? 'bg-emerald-50 border-2 border-emerald-500'
+                          : 'bg-white border border-gray-200 hover:border-emerald-300'
                           }`}
                       >
                         <div className="flex items-start justify-between mb-2">
@@ -162,7 +166,7 @@ export default function Customer() {
                               Order #{order.id?.slice(-6).toUpperCase()}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {format(new Date(order.created_date), 'MMM d, h:mm a')}
+                              {format(new Date(order.createdAt), 'MMM d, h:mm a')}
                             </p>
                           </div>
                           <Badge className={statusColors[order.status]}>
@@ -173,7 +177,7 @@ export default function Customer() {
                           <Package className="w-4 h-4" />
                           <span>{order.items?.length || 0} items</span>
                           <span>•</span>
-                          <span>${order.total_amount?.toFixed(2)}</span>
+                          <span>${Number(order.totalAmount || 0).toFixed(2)}</span>
                         </div>
                       </motion.button>
                     ))}
@@ -192,8 +196,8 @@ export default function Customer() {
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
                       className={`w-full text-left p-4 rounded-xl transition-all ${selectedOrder?.id === order.id
-                          ? 'bg-gray-100 border-2 border-gray-400'
-                          : 'bg-white border border-gray-200 hover:border-gray-300'
+                        ? 'bg-gray-100 border-2 border-gray-400'
+                        : 'bg-white border border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -202,7 +206,7 @@ export default function Customer() {
                             Order #{order.id?.slice(-6).toUpperCase()}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {format(new Date(order.created_date), 'MMM d, yyyy')}
+                            {format(new Date(order.createdAt), 'MMM d, yyyy')}
                           </p>
                         </div>
                         <Badge className={statusColors[order.status]}>
@@ -210,7 +214,7 @@ export default function Customer() {
                         </Badge>
                       </div>
                       <div className="text-sm text-gray-600">
-                        ${order.total_amount?.toFixed(2)}
+                        ${Number(order.totalAmount || 0).toFixed(2)}
                       </div>
                     </button>
                   ))}
@@ -236,18 +240,18 @@ export default function Customer() {
                     >
                       <LiveMap
                         driverLocation={
-                          selectedOrder.driver_lat && selectedOrder.driver_lng
-                            ? { lat: selectedOrder.driver_lat, lng: selectedOrder.driver_lng }
+                          selectedOrder.driverLat && selectedOrder.driverLng
+                            ? { lat: Number(selectedOrder.driverLat), lng: Number(selectedOrder.driverLng) }
                             : null
                         }
                         customerLocation={
-                          selectedOrder.customer_lat && selectedOrder.customer_lng
-                            ? { lat: selectedOrder.customer_lat, lng: selectedOrder.customer_lng }
+                          selectedOrder.customerLat && selectedOrder.customerLng
+                            ? { lat: Number(selectedOrder.customerLat), lng: Number(selectedOrder.customerLng) }
                             : null
                         }
                         restaurantLocation={
-                          selectedOrder.restaurant_lat && selectedOrder.restaurant_lng
-                            ? { lat: selectedOrder.restaurant_lat, lng: selectedOrder.restaurant_lng }
+                          selectedOrder.restaurantLat && selectedOrder.restaurantLng
+                            ? { lat: Number(selectedOrder.restaurantLat), lng: Number(selectedOrder.restaurantLng) }
                             : null
                         }
                         orderStatus={selectedOrder.status}
@@ -259,8 +263,8 @@ export default function Customer() {
                   {/* Order Tracker */}
                   <OrderTracker
                     currentStatus={selectedOrder.status}
-                    estimatedTime={selectedOrder.estimated_time}
-                    driverName={selectedOrder.driver_name}
+                    estimatedTime={selectedOrder.estimatedTime}
+                    driverName={selectedOrder.driverName}
                   />
 
                   {/* Order Details */}
@@ -277,7 +281,7 @@ export default function Customer() {
                         <MapPin className="w-5 h-5 text-emerald-500 mt-0.5" />
                         <div>
                           <p className="text-sm text-gray-500">Delivery Address</p>
-                          <p className="font-medium text-gray-900">{selectedOrder.customer_address}</p>
+                          <p className="font-medium text-gray-900">{selectedOrder.customerAddress}</p>
                         </div>
                       </div>
 
@@ -293,7 +297,7 @@ export default function Customer() {
                           ))}
                           <div className="flex justify-between pt-3 border-t font-bold">
                             <span>Total</span>
-                            <span className="text-emerald-600">${selectedOrder.total_amount?.toFixed(2)}</span>
+                            <span className="text-emerald-600">${Number(selectedOrder.totalAmount || 0).toFixed(2)}</span>
                           </div>
                         </div>
                       </div>

@@ -13,7 +13,7 @@ export default function CartDrawer({ isOpen, onClose, cart, onUpdateQuantity, on
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-full sm:w-[420px] p-0 flex flex-col">
+      <SheetContent side="right" className="w-full sm:w-[420px] p-0 flex flex-col bg-white">
         <SheetHeader className="p-6 border-b">
           <SheetTitle className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -28,8 +28,8 @@ export default function CartDrawer({ isOpen, onClose, cart, onUpdateQuantity, on
 
         {cart.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-              <ShoppingBag className="w-12 h-12 text-gray-300" />
+            <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-6">
+              <ShoppingBag className="w-12 h-12 text-emerald-200" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h3>
             <p className="text-gray-500 text-center mb-6">
@@ -49,22 +49,22 @@ export default function CartDrawer({ isOpen, onClose, cart, onUpdateQuantity, on
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="flex gap-4 p-3 bg-gray-50 rounded-xl"
+                    className="flex gap-4 p-3 bg-emerald-50/50 rounded-xl"
                   >
                     <img
-                      src={item.image_url || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100&q=80`}
+                      src={item.imageUrl || `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=100&q=80`}
                       alt={item.name}
                       className="w-20 h-20 object-cover rounded-lg"
                     />
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900 line-clamp-1">{item.name}</h4>
-                      <p className="text-sm text-emerald-600 font-semibold">${item.price?.toFixed(2)}</p>
+                      <p className="text-sm text-emerald-600 font-semibold">${Number(item.price || 0).toFixed(2)}</p>
 
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                            className="w-7 h-7 bg-white rounded-full flex items-center justify-center border hover:bg-gray-100"
+                            className="w-7 h-7 bg-white rounded-full flex items-center justify-center border hover:bg-emerald-50"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -90,7 +90,7 @@ export default function CartDrawer({ isOpen, onClose, cart, onUpdateQuantity, on
             </div>
 
             {/* Summary */}
-            <div className="border-t p-6 space-y-4 bg-gray-50">
+            <div className="border-t p-6 space-y-4 bg-emerald-50/30">
               <div className="space-y-2">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
@@ -112,7 +112,7 @@ export default function CartDrawer({ isOpen, onClose, cart, onUpdateQuantity, on
 
               <Button
                 onClick={onCheckout}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-xl py-6 text-lg font-semibold group"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-xl py-6 text-lg text-white font-semibold group"
               >
                 Checkout
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

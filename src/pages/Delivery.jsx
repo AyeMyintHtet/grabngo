@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Car, Power, MapPin, DollarSign, Clock, Package, Loader2, Bell, CheckCircle } from 'lucide-react';
+import { Car, Power, Package, DollarSign, Clock, Loader2, Bell } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,15 @@ import { toast } from "sonner";
 import LiveMap from '@/components/tracking/LiveMap';
 import OrderRequestCard from '@/components/delivery/OrderRequestCard';
 import ActiveDeliveryCard from '@/components/delivery/ActiveDeliveryCard';
+
+// Use same mock user strategy as Customer/Items page
+const DRIVER_USER = {
+  id: 'driver_123',
+  email: 'driver@grabngo.com',
+  fullName: 'John Driver'
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export default function Delivery() {
   const queryClient = useQueryClient();
@@ -21,9 +29,10 @@ export default function Delivery() {
 
   // Load user
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {
-      base44.auth.redirectToLogin();
-    });
+    // Simulate auth check
+    setTimeout(() => {
+      setUser(DRIVER_USER);
+    }, 500);
   }, []);
 
   // Get driver's current location
@@ -38,7 +47,7 @@ export default function Delivery() {
         },
         (error) => {
           console.error('Location error:', error);
-          // Use default location
+          // Use default location (NYC center)
           setDriverLocation({ lat: 40.7128, lng: -74.0060 });
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -51,7 +60,12 @@ export default function Delivery() {
   // Fetch pending orders (for drivers to accept)
   const { data: pendingOrders = [], refetch: refetchPending } = useQuery({
     queryKey: ['pending-orders'],
-    queryFn: () => base44.entities.Order.filter({ status: 'pending' }, '-created_date'),
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE_URL}/api/orders?status=pending`);
+      if (!response.ok) throw new Error('Failed to fetch pending orders');
+      const data = await response.json();
+      return data;
+    },
     enabled: isOnline && !!user,
     refetchInterval: 3000,
   });
@@ -59,25 +73,19 @@ export default function Delivery() {
   // Fetch driver's active orders
   const { data: activeOrders = [], refetch: refetchActive } = useQuery({
     queryKey: ['driver-active-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({
-      driver_email: user?.email,
-      status: ['accepted', 'preparing', 'picked_up', 'delivering']
-    }, '-created_date'),
+    queryFn: async () => {
+      // Filter by multiple statuses: accepted, preparing, picked_up, delivering
+      const statuses = ['accepted', 'preparing', 'picked_up', 'delivering'].join(',');
+      const response = await fetch(`${API_BASE_URL}/api/orders?driverEmail=${user.email}&status=${statuses}`);
+      if (!response.ok) throw new Error('Failed to fetch active orders');
+      // Fix potential API returning null/undefined for empty lists
+      const data = await response.json();
+      // Ensure we have an array
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.email,
     refetchInterval: 3000,
   });
-
-  // Subscribe to order updates
-  useEffect(() => {
-    if (!user?.email) return;
-
-    const unsubscribe = base44.entities.Order.subscribe((event) => {
-      refetchPending();
-      refetchActive();
-    });
-
-    return () => unsubscribe();
-  }, [user?.email, refetchPending, refetchActive]);
 
   // Accept order mutation
   const acceptOrderMutation = useMutation({
@@ -85,18 +93,32 @@ export default function Delivery() {
       const distance = 2 + Math.random() * 5; // 2-7 km
       const estimatedTime = Math.round(distance * 4 + 5); // ~4 min per km + 5 min prep
 
-      return base44.entities.Order.update(orderId, {
-        status: 'accepted',
-        driver_email: user.email,
-        driver_name: user.full_name,
-        driver_lat: driverLocation?.lat,
-        driver_lng: driverLocation?.lng,
-        estimated_time: estimatedTime,
-        distance_km: distance
+      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'accepted',
+          driverEmail: DRIVER_USER.email,
+          driverName: DRIVER_USER.fullName,
+          driverLat: driverLocation?.lat,
+          driverLng: driverLocation?.lng,
+          estimatedTime: estimatedTime,
+          distanceKm: distance
+        }),
       });
+      if (!response.ok) throw new Error('Failed to accept order');
+      return response.json();
     },
     onSuccess: () => {
-      toast.success('Order accepted! Start delivery.');
+      toast.success(`Order accepted! Start delivery.`, {
+        duration: 2000,
+        position: "top-right",
+        style: {
+          backgroundColor: '#10B981',
+          color: 'white',
+          border: 'none',
+        },
+      });
       refetchPending();
       refetchActive();
     }
@@ -109,16 +131,23 @@ export default function Delivery() {
 
       // Update driver location
       if (driverLocation) {
-        update.driver_lat = driverLocation.lat;
-        update.driver_lng = driverLocation.lng;
+        update.driverLat = driverLocation.lat;
+        update.driverLng = driverLocation.lng;
       }
 
       // Update estimated time based on status
       if (newStatus === 'delivering') {
-        update.estimated_time = Math.round(3 + Math.random() * 5);
+        update.estimatedTime = Math.round(3 + Math.random() * 5);
       }
 
-      return base44.entities.Order.update(orderId, update);
+      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(update),
+      });
+
+      if (!response.ok) throw new Error('Failed to update status');
+      return response.json();
     },
     onSuccess: (data, variables) => {
       const messages = {
@@ -127,13 +156,20 @@ export default function Delivery() {
         delivering: 'On the way to customer.',
         delivered: 'Delivery completed! Great job!'
       };
-      toast.success(messages[variables.newStatus] || 'Status updated');
-
+      toast.success(messages[variables.newStatus] || 'Status updated', {
+        duration: 2000,
+        position: "top-right",
+        style: {
+          backgroundColor: '#10B981',
+          color: 'white',
+          border: 'none',
+        },
+      });
       if (variables.newStatus === 'delivered') {
         setTodayStats(prev => ({
           ...prev,
           deliveries: prev.deliveries + 1,
-          earnings: prev.earnings + (data.total_amount * 0.15 + 3)
+          earnings: prev.earnings + (Number(data.totalAmount || 0) * 0.15 + 3)
         }));
       }
 
@@ -153,6 +189,7 @@ export default function Delivery() {
     );
   }
 
+  // Find the single current active delivery that is NOT delivered or cancelled
   const currentDelivery = activeOrders.find(o => !['delivered', 'cancelled'].includes(o.status));
 
   return (
@@ -176,8 +213,8 @@ export default function Delivery() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className={`flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${isOnline
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                : 'bg-white text-gray-700 border border-gray-200'
+              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+              : 'bg-white text-gray-700 border border-gray-200'
               }`}
           >
             <div className="flex items-center gap-3">
@@ -243,7 +280,7 @@ export default function Delivery() {
             <p className="text-gray-500 mb-6">Go online to start receiving delivery requests</p>
             <Button
               onClick={() => setIsOnline(true)}
-              className="bg-emerald-500 hover:bg-emerald-600 rounded-full px-8 py-6 text-lg"
+              className="bg-emerald-500 text-white hover:bg-emerald-600 rounded-full px-8 py-6 text-lg"
             >
               <Power className="w-5 h-5 mr-2" />
               Go Online
@@ -258,13 +295,13 @@ export default function Delivery() {
             >
               <LiveMap
                 driverLocation={driverLocation}
-                customerLocation={currentDelivery ? {
-                  lat: currentDelivery.customer_lat,
-                  lng: currentDelivery.customer_lng
+                customerLocation={currentDelivery && currentDelivery.customerLat && currentDelivery.customerLng ? {
+                  lat: Number(currentDelivery.customerLat),
+                  lng: Number(currentDelivery.customerLng)
                 } : null}
-                restaurantLocation={currentDelivery ? {
-                  lat: currentDelivery.restaurant_lat,
-                  lng: currentDelivery.restaurant_lng
+                restaurantLocation={currentDelivery && currentDelivery.restaurantLat && currentDelivery.restaurantLng ? {
+                  lat: Number(currentDelivery.restaurantLat),
+                  lng: Number(currentDelivery.restaurantLng)
                 } : null}
                 orderStatus={currentDelivery?.status}
                 className="h-[500px] shadow-lg"
